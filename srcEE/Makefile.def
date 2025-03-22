@@ -1,0 +1,3 @@
+include /Users/igorsok/SWMF_2024_09_01/Makefile.def
+MYDIR=/Users/igorsok/SWMF_2024_09_01/TD/srcEE
+COMPONENT=TD
