@@ -1,6 +1,0 @@
-
-install:
-	echo "Inslall TD22"
-
-distclean:
-	echo "Uninstall TD22"
