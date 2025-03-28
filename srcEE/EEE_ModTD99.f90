@@ -9,6 +9,7 @@ module ModExternalField
   integer, parameter  :: Axial_  = 1, Poloidal_ =  2, Toroidal_  = 3
   ! For Kappa2 below this value the field is calculated as external:
   real :: Kappa2ExtMax
+  !$acc declare create(Kappa2ExtMax)
 contains
   !============================================================================
   subroutine external_field(Kappa2In, Amplitude_I)
@@ -83,7 +84,7 @@ contains
     real, intent(in)     :: KappaPrime2In
     !--------------------------------------------------------------------------
     q_0 = 0.125*toroid_p(0, KappaPrime2In=KappaPrime2In)/&
-       toroid_q(0,KappaPrime2In=KappaPrime2In)
+         toroid_q(0,KappaPrime2In=KappaPrime2In)
   end function q_0
   !============================================================================
 end module ModFormFactors
@@ -598,7 +599,7 @@ contains
           ! Internal field from the uniform current
           !
           call uniform_current_field(KappaPrime2In = KappaPrime**2, &
-            Amplitude_I=Amplitude_I)
+               Amplitude_I=Amplitude_I)
           ! Eqs. 35
           Var_VI(AxialU_,iLoop)    = Amplitude_I(Axial_)
           Var_VI(PoloidalU_,iLoop) = KappaPrime*Amplitude_I(Poloidal_)
@@ -625,7 +626,7 @@ contains
           ! Internal field from the uniform current
           !
           call surface_current_field(KappaPrime2In = KappaPrime**2, &
-            Amplitude_I=Amplitude_I)
+               Amplitude_I=Amplitude_I)
           ! Eqs. 35
           Var_VI(AxialS_,iLoop)    = Amplitude_I(Axial_)
           Var_VI(PoloidalS_,iLoop) = KappaPrime*Amplitude_I(Poloidal_)
@@ -657,7 +658,7 @@ contains
           ! Internal field from the parabolic current
           !
           call parabolic_current_field(KappaPrime2In = KappaPrime**2, &
-            Amplitude_I=Amplitude_I)
+               Amplitude_I=Amplitude_I)
           ! Eqs. 35
           Var_VI(AxialP_,iLoop)    = Amplitude_I(Axial_)
           Var_VI(PoloidalP_,iLoop) = KappaPrime*Amplitude_I(Poloidal_)
@@ -696,7 +697,7 @@ contains
          StringFormatIn = '(4es18.10)'          ,&
          Coord1In_I = Coord_I                   ,&
          VarIn_VI = Current_VI)
-       call save_plot_file(NameFile='test_toroidal.out', &
+    call save_plot_file(NameFile='test_toroidal.out', &
          TypeFileIn='ascii'                     ,&
          NameVarIn=&
          'kappa_prime Uniform Parabolic Merged', &
@@ -955,12 +956,12 @@ contains
        ! The rest is only read if TypeCharge is not "none"
        if(TypeCharge /= "none")then
           !  if(UseEquilibriumCurrent)then
-             ! In this case we read, which fraction of the above
-             ! equilibrium strapping field is due to magnetic charges
+          ! In this case we read, which fraction of the above
+          ! equilibrium strapping field is due to magnetic charges
           call read_var('bQStrapFraction', bQStrapFraction)
           ! else
-             ! The magnetude of magnetic charges is characterized in terms
-             ! of the strapping field they produce at the apex of flux rope
+          ! The magnetude of magnetic charges is characterized in terms
+          ! of the strapping field they produce at the apex of flux rope
           !   call read_var('bQStrappingDim', bQStrappingDim)
           ! end if
           call read_var('qDistance',  qDistance)
