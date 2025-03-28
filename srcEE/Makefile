@@ -2,6 +2,7 @@ include Makefile.def
 include Makefile.conf
 
 SRC = ${EMPIRICALEEDIR}
+WRONG = call EEE_init_CME_parameters
 
 install:
 	@(if [ -f EEE_ModTD99.f90 ]; then                         \
@@ -14,6 +15,8 @@ install:
 		mv ${SRC}/EEE_ModCommonVariables.f90 \
 			${SRC}/EEE_ModCommonVariables.BAK;        \
 		mv EEE_ModCommonVariables.f90 ${SRC}/.;           \
+		perl -i -pe \
+		's/${WRONG}/! ${WRONG}/' ${DIR}/*/*/*/*.f90;      \
 	fi);
 
 allclean:
@@ -27,4 +30,6 @@ allclean:
 		mv ${SRC}/EEE_ModCommonVariables.f90 .;           \
 		mv ${SRC}/EEE_ModCommonVariables.BAK \
 			${SRC}/EEE_ModCommonVariables.f90 ;       \
+		perl -i -pe \
+		's/! ${WRONG}/${WRONG}/' ${DIR}/*/*/*/*.f90;      \
 	fi);
