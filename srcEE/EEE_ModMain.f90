@@ -18,6 +18,7 @@ module EEE_ModMain
   public :: EEE_get_b0
   public :: EEE_do_not_add_cme_again
   public :: EEE_set_plot_range
+  public :: EEE_init_CME_parameters
 
 contains
   !============================================================================
@@ -337,6 +338,12 @@ contains
     nXY = nint(ExtensionFactor*SizeXY/DXyzPlot)
     nZ  = nint(ExtensionFactor*SizeZ /DXyzPlot)
   end subroutine EEE_set_plot_range
+  !============================================================================
+  subroutine EEE_init_CME_parameters
+    character(len=*), parameter:: NameSub = 'EEE_init_CME_parameters'
+    !--------------------------------------------------------------------------
+    call CON_stop('Incorrect routine '//NameSub//' is disabled')
+  end subroutine EEE_init_CME_parameters
   !============================================================================
 end module EEE_ModMain
 !==============================================================================
