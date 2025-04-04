@@ -12,13 +12,16 @@ module EEE_ModMain
   private
 
   public :: EEE_initialize
+  public :: EEE_init_CME_parameters
   public :: EEE_set_parameters
   public :: EEE_get_state_init
   public :: EEE_get_state_bc
   public :: EEE_get_b0
   public :: EEE_do_not_add_cme_again
   public :: EEE_set_plot_range
-  public :: EEE_init_CME_parameters
+
+  logical :: DoInit
+  !$acc declare create(DoInit)
 
 contains
   !============================================================================
@@ -112,7 +115,13 @@ contains
     end if
 
     DoInit = .true.
+    !$acc update device(UseCme, UseGL, UseTD, UseTD14, UseTD22)
+    !$acc update device(UseSpheromak, DoAddTD, DoAddGL, DoAddSpheromak)
 
+    !$acc update device(Io2Si_V, Si2Io_V, Io2No_V, No2Io_V, Si2No_V, No2Si_V)
+    !$acc update device(rCmeApexInvSi, tStartCme, tDecayCmeDim, tDecayCme)
+    !$acc update device(Gbody)
+    !$acc update device(DoInit)
   end subroutine EEE_initialize
   !============================================================================
   subroutine EEE_set_parameters(NameCommand)
@@ -214,7 +223,7 @@ contains
   end subroutine EEE_set_parameters
   !============================================================================
   subroutine EEE_get_state_bc(Xyz_D, Rho, U_D, B_D, p, Time, nStep, nIter)
-
+    !$acc routine seq
     use EEE_ModCommonVariables, ONLY: UseCme, UseTD, UseShearFlow, UseGL, &
          UseCms, UseSpheromak, tStartCme, tDecayCmeDim
     use EEE_ModTD99, ONLY: get_TD99_fluxrope
@@ -252,26 +261,28 @@ contains
        call get_GL98_fluxrope(Xyz_D, Rho1, p1, B1_D, U1_D, Time) !! send Time
        B_D = B_D + Coeff*B1_D
     end if
-   if(UseSpheromak)then
+
+    if(UseSpheromak)then
        call get_GL98_fluxrope(Xyz_D, Rho1, p1, B1_D, U1_D, Time)
        B_D = B_D + Coeff*B1_D; U_D = U_D + Coeff*U1_D
     endif
 
+#ifndef _OPENACC
     if(UseShearFlow)then
        call get_shearflow(Xyz_D, Time, U1_D, nIter)
        U_D = U_D + Coeff*U1_D
     end if
 
     if(UseCms) call get_cms(Xyz_D, B_D)
-
+#endif
   end subroutine EEE_get_state_BC
   !============================================================================
   subroutine EEE_get_state_init(Xyz_D, Rho, B_D, p, nStep, nIter)
 
     use EEE_ModCommonVariables, ONLY: UseCme, DoAddFluxRope, DoAddTD, &
          DoAddGL, UseCms, DoAddSpheromak, tStartCme
-    use EEE_ModGL98, ONLY: get_GL98_fluxrope
-    use EEE_ModTD99, ONLY: get_TD99_fluxrope
+    use EEE_ModGL98, ONLY: get_GL98_fluxrope, gl98_init
+    use EEE_ModTD99, ONLY: get_TD99_fluxrope, init_TD99_parameters
     use EEE_ModCms,  ONLY: get_cms
 
     real, intent(in) :: Xyz_D(3)
@@ -287,17 +298,32 @@ contains
 
     if(DoAddTD)then
        ! Add Titov & Demoulin (TD99) flux rope
+       if(DoInit)then
+          call init_TD99_parameters
+          DoInit = .false.
+          !$acc update device(DoInit)
+       end if
        call get_TD99_fluxrope(Xyz_D, B1_D, Rho1, p1)
        Rho = Rho + Rho1; B_D = B_D + B1_D; p = p + p1
     endif
 
     if(DoAddGL)then
        ! Add Gibson & Low (GL98) flux rope
+       if(DoInit)then
+          call gl98_init
+          DoInit = .false.
+          !$acc update device(DoInit)
+       end if
        call get_GL98_fluxrope(Xyz_D, Rho1, p1, B1_D, U1_D)
        Rho = Rho + Rho1; B_D = B_D + B1_D; p = p + p1
     end if
 
     if(DoAddSpheromak)then
+       if(DoInit)then
+          call gl98_init
+          DoInit = .false.
+          !$acc update device(DoInit)
+       end if
        call get_GL98_fluxrope(Xyz_D, Rho1, p1, B1_D, U1_D, tStartCme)
        Rho = Rho + Rho1; B_D = B_D + B1_D
        p = p + p1; U_D = U_D + U1_D
